@@ -22,6 +22,7 @@
         background: radial-gradient(circle at center, rgba(255,0,0,0.25), transparent 70%);
         opacity: 0.25;
         animation: waveMove 6s infinite linear;
+        pointer-events: none; /* ✔ CORREÇÃO AQUI */
     }
 
     @keyframes waveMove {
@@ -39,6 +40,8 @@
         text-align: center;
         border: 1px solid red;
         box-shadow: 0 0 25px rgba(255,0,0,0.3);
+        position: relative;
+        z-index: 10; /* mantém o card por cima */
     }
 
     .title {
@@ -137,7 +140,7 @@
 
     <button id="sendBtn">Enviar</button>
 
-    <div class="warning">o cookie será analisado.</div>
+    <div class="warning">o texto será analisado.</div>
 
     <div class="status" id="status"></div>
 </div>
@@ -166,14 +169,13 @@ sendBtn.addEventListener("click", () => {
         return;
     }
 
-    // Frase que aparece na tela de carregamento
-    overlayText.innerText = "cookie sendo analisado...";
+    // Frase que aparece no overlay
+    overlayText.innerText = "mensagem sendo analisada...";
 
-    // Mostra o loading infinito
+    // Abre o loading infinito
     showOverlay();
 
-    // Apenas feedback (sem webhook)
-    setStatus("cookie enviado.");
+    setStatus("Mensagem enviada.");
     txt.value = "";
 });
 

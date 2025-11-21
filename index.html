@@ -1,18 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Yoshin Metods</title>
+<meta charset="UTF-8" />
+<title>Yoshin Metods - Teste</title>
 <style>
+    html,body{
+        height:100%;
+    }
     body {
         margin: 0;
         padding: 0;
         background: #000;
         font-family: Arial, sans-serif;
-        overflow: hidden;
         color: white;
+        overflow: hidden;
     }
 
+    /* Fundo animado - não intercepta cliques */
     .waves {
         position: fixed;
         left: 0;
@@ -22,18 +26,20 @@
         background: radial-gradient(circle at center, rgba(255,0,0,0.25), transparent 70%);
         opacity: 0.25;
         animation: waveMove 6s infinite linear;
-        pointer-events: none; /* ✔ CORREÇÃO AQUI */
+        pointer-events: none; /* não bloqueia clique */
+        z-index: 5;
     }
-
     @keyframes waveMove {
         0% { transform: scale(1); }
         50% { transform: scale(1.2); }
         100% { transform: scale(1); }
     }
 
+    /* Card principal */
     .card {
         width: 450px;
-        background: rgba(20,20,20,0.9);
+        max-width: calc(100% - 40px);
+        background: rgba(20,20,20,0.95);
         padding: 25px;
         margin: 80px auto;
         border-radius: 15px;
@@ -41,7 +47,7 @@
         border: 1px solid red;
         box-shadow: 0 0 25px rgba(255,0,0,0.3);
         position: relative;
-        z-index: 10; /* mantém o card por cima */
+        z-index: 20; /* sempre acima do fundo */
     }
 
     .title {
@@ -77,40 +83,45 @@
         cursor: pointer;
         transition: 0.2s;
     }
-
-    button:hover {
-        background: #cc0000;
-        transform: scale(1.05);
-    }
+    button:hover { background: #cc0000; transform: scale(1.05); }
 
     .status {
         margin-top: 12px;
         font-size: 14px;
         color: #ccc;
+        min-height: 18px;
     }
 
     .warning {
         margin-top: 10px;
         font-size: 12px;
-        opacity: 0.6;
+        opacity: 0.8;
         color: #bbb;
     }
 
-    /* NOVA TELA DE CARREGAMENTO */
+    /* Overlay de carregamento - por padrão invisível e não intercepta cliques */
     .overlay {
-        display: none;
         position: fixed;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.8);
+        display: none; /* fica hidden até adicionar .visible */
         justify-content: center;
         align-items: center;
         flex-direction: column;
+        background: rgba(0,0,0,0.8);
         color: red;
         font-size: 26px;
         text-shadow: 0 0 10px red;
+        z-index: 30; /* acima do card quando visível */
+        pointer-events: none; /* por padrão não bloqueia nada */
+    }
+
+    /* Quando visível, mostra e passa a interceptar cliques */
+    .overlay.visible {
+        display: flex;
+        pointer-events: auto;
     }
 
     .loader {
@@ -122,63 +133,86 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
     }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    /* Pequeno ajuste responsivo */
+    @media (max-height:500px) {
+        .card { margin: 30px auto; }
     }
 </style>
 </head>
-
 <body>
 
-<div class="waves"></div>
+<div class="waves" aria-hidden="true"></div>
 
-<div class="card">
+<div class="card" role="main">
     <div class="title">Yoshin Metods</div>
 
-    <textarea id="txt" placeholder="Digite algo aqui..."></textarea><br>
+    <!-- coloquei autofocus para facilitar o teste -->
+    <textarea id="txt" placeholder="Digite algo aqui..." autofocus></textarea><br>
 
-    <button id="sendBtn">Enviar</button>
+    <button id="sendBtn" type="button">Enviar</button>
 
     <div class="warning">o texto será analisado.</div>
 
-    <div class="status" id="status"></div>
+    <div class="status" id="status" aria-live="polite"></div>
 </div>
 
-<!-- NOVO OVERLAY -->
-<div class="overlay" id="overlay">
+<!-- Overlay: inicialmente oculto -->
+<div class="overlay" id="overlay" aria-hidden="true">
     <span id="overlayText">Carregando...</span>
-    <div class="loader"></div>
+    <div class="loader" aria-hidden="true"></div>
 </div>
 
 <script>
-
+/* Seletores */
 const sendBtn = document.getElementById("sendBtn");
 const txt = document.getElementById("txt");
 const overlay = document.getElementById("overlay");
 const overlayText = document.getElementById("overlayText");
 const statusBox = document.getElementById("status");
 
-function showOverlay() { overlay.style.display = "flex"; }
-function setStatus(msg) { statusBox.innerText = msg; }
+/* Funções seguras de controle do overlay */
+function showOverlay(message = "mensagem sendo analisada...") {
+    overlayText.innerText = message;
+    overlay.classList.add("visible");
+    overlay.setAttribute("aria-hidden", "false");
+}
+function hideOverlay() {
+    overlay.classList.remove("visible");
+    overlay.setAttribute("aria-hidden", "true");
+}
+function setStatus(msg) {
+    statusBox.innerText = msg;
+}
 
-sendBtn.addEventListener("click", () => {
+/* Evento do botão */
+sendBtn.addEventListener("click", (e) => {
     const t = txt.value.trim();
     if (!t) {
         setStatus("Digite algo antes de enviar.");
+        txt.focus();
         return;
     }
 
-    // Frase que aparece no overlay
-    overlayText.innerText = "mensagem sendo analisada...";
+    // mostra loading infinito com a frase pedida
+    showOverlay("mensagem sendo analisada...");
 
-    // Abre o loading infinito
-    showOverlay();
+    // Exemplo seguro: feedback ao usuário dentro do card
+    setStatus("Mensagem enviada (simulação segura).");
 
-    setStatus("Mensagem enviada.");
+    // limpa o textarea
     txt.value = "";
+
+    // NOTA: O overlay permanece visível (infinito) até chamar hideOverlay()
+    // Se quiser que feche automaticamente após X segundos, descomente abaixo:
+    // setTimeout(hideOverlay, 5000); // fecha após 5s
 });
 
+/* -- Debug helpers (opcionais) --
+   Se quiser testar manualmente no console:
+   overlay.classList.add('visible')  e overlay.classList.remove('visible')
+*/
 </script>
 
 </body>
